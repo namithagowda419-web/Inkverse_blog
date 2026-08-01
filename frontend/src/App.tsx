@@ -1,11 +1,13 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { NotificationProvider } from './context/NotificationContext';
 
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
+import { PageTransition } from './components/PageTransition';
 
 import { LandingPage } from './pages/LandingPage';
 import { HomePage } from './pages/HomePage';
@@ -24,6 +26,33 @@ import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { AdminPage } from './pages/AdminPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
+const AnimatedRoutes: React.FC = () => {
+  const location = useLocation();
+
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route path="/" element={<PageTransition><LandingPage /></PageTransition>} />
+        <Route path="/home" element={<PageTransition><HomePage /></PageTransition>} />
+        <Route path="/explore" element={<PageTransition><ExplorePage /></PageTransition>} />
+        <Route path="/categories" element={<PageTransition><CategoriesPage /></PageTransition>} />
+        <Route path="/blog/:slug" element={<PageTransition><BlogDetailsPage /></PageTransition>} />
+        <Route path="/write" element={<PageTransition><WriteBlogPage /></PageTransition>} />
+        <Route path="/edit/:id" element={<PageTransition><EditBlogPage /></PageTransition>} />
+        <Route path="/dashboard" element={<PageTransition><DashboardPage /></PageTransition>} />
+        <Route path="/profile/:username" element={<PageTransition><ProfilePage /></PageTransition>} />
+        <Route path="/bookmarks" element={<PageTransition><BookmarksPage /></PageTransition>} />
+        <Route path="/login" element={<PageTransition><LoginPage /></PageTransition>} />
+        <Route path="/register" element={<PageTransition><RegisterPage /></PageTransition>} />
+        <Route path="/forgot-password" element={<PageTransition><ForgotPasswordPage /></PageTransition>} />
+        <Route path="/reset-password" element={<PageTransition><ResetPasswordPage /></PageTransition>} />
+        <Route path="/admin" element={<PageTransition><AdminPage /></PageTransition>} />
+        <Route path="*" element={<PageTransition><NotFoundPage /></PageTransition>} />
+      </Routes>
+    </AnimatePresence>
+  );
+};
+
 export const App: React.FC = () => {
   return (
     <ThemeProvider>
@@ -33,24 +62,7 @@ export const App: React.FC = () => {
             <div className="min-h-screen flex flex-col bg-surface-light dark:bg-surface-dark text-text-primary dark:text-text-darkPrimary transition-colors duration-300 font-sans">
               <Navbar />
               <main className="flex-1">
-                <Routes>
-                  <Route path="/" element={<LandingPage />} />
-                  <Route path="/home" element={<HomePage />} />
-                  <Route path="/explore" element={<ExplorePage />} />
-                  <Route path="/categories" element={<CategoriesPage />} />
-                  <Route path="/blog/:slug" element={<BlogDetailsPage />} />
-                  <Route path="/write" element={<WriteBlogPage />} />
-                  <Route path="/edit/:id" element={<EditBlogPage />} />
-                  <Route path="/dashboard" element={<DashboardPage />} />
-                  <Route path="/profile/:username" element={<ProfilePage />} />
-                  <Route path="/bookmarks" element={<BookmarksPage />} />
-                  <Route path="/login" element={<LoginPage />} />
-                  <Route path="/register" element={<RegisterPage />} />
-                  <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-                  <Route path="/reset-password" element={<ResetPasswordPage />} />
-                  <Route path="/admin" element={<AdminPage />} />
-                  <Route path="*" element={<NotFoundPage />} />
-                </Routes>
+                <AnimatedRoutes />
               </main>
               <Footer />
             </div>

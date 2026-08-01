@@ -13,6 +13,55 @@ const Comment = require('./models/Comment');
 // Load environment variables
 dotenv.config();
 
+const app = express();
+
+app.use(cors({ origin: true, credentials: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Static uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Health endpoint (supports both /health and /api/health)
+app.get(['/health', '/api/health'], (req, res) => {
+  res.status(200).json({
+    status: 'online',
+    message: 'InkVerse Publishing Platform Server is running',
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// REST API Routes (supports both Vercel stripped routes and direct /api prefix)
+app.use(['/auth', '/api/auth'], require('./routes/authRoutes'));
+app.use(['/blogs', '/api/blogs'], require('./routes/blogRoutes'));
+app.use(['/comments', '/api/comments', '/api'], require('./routes/commentRoutes'));
+app.use(['/users', '/api/users'], require('./routes/userRoutes'));
+app.use(['/categories', '/api/categories'], require('./routes/categoryRoutes'));
+app.use(['/analytics', '/api/analytics'], require('./routes/analyticsRoutes'));
+app.use(['/admin', '/api/admin'], require('./routes/adminRoutes'));
+
+// Serve static frontend build locally when running in local unified server mode
+if (!process.env.VERCEL) {
+  const frontendDistPath = path.join(__dirname, '../frontend/dist');
+  if (fs.existsSync(frontendDistPath)) {
+    app.use(express.static(frontendDistPath));
+  }
+
+  app.get('*', (req, res) => {
+    const indexPath = path.join(frontendDistPath, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      return res.sendFile(indexPath);
+    }
+    res.status(404).json({ success: false, message: 'InkVerse API Endpoint Not Found' });
+  });
+} else {
+  app.use('*', (req, res) => {
+    res.status(404).json({ success: false, message: 'InkVerse API Route Not Found' });
+  });
+}
+
+app.use(errorHandler);
+
 // Auto-seed function to ensure demo content exists on startup
 const autoSeed = async () => {
   try {
@@ -99,14 +148,6 @@ Deep Purple (\`#5B3A8E\`) carries a rich heritage of digital elegance, modern so
 2. **Subtle Motion**: Micro-animations using Framer Motion that guide the reader's line of sight without distracting.
 3. **Glassmorphism Navbars**: Translucent navigation bars offering instant spatial awareness across long scrolling articles.
 
-\`\`\`css
-/* InkVerse Design System Token */
-.bg-brand-primary {
-  background-color: #5B3A8E;
-  box-shadow: 0 10px 30px rgba(91, 58, 142, 0.15);
-}
-\`\`\`
-
 > "Good design is as little design as possible. Less, but better – because it concentrates on the essential aspects." – Dieter Rams
 
 ### Concluding Thoughts
@@ -145,56 +186,52 @@ Our architecture integrates backend REST services with static client renderers i
 const connectDB = async () => {
   try {
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('[DB] Database synchronized successfully.');
+    console.log('Database connected');
   } catch (err) {
-    console.error('[DB Error]', err.message);
+    console.error(err);
   }
 };
 \`\`\`
 
-### Production Readiness Checklist
-- Zero unhandled promise rejections
-- Express global error middleware with clean JSON error contracts
-- Automated seed fallback for zero-downtime local testing
+## System Benchmarks
+
+By eliminating CORS overhead and serving client bundles directly from the primary HTTP port, initial payload latency is reduced significantly.
           `,
           coverImage: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=1000&auto=format&fit=crop&q=80',
           author: author1._id,
           category: techCat._id,
-          tags: ['NodeJS', 'MongoDB', 'Architecture', 'TypeScript'],
+          tags: ['Nodejs', 'Backend', 'MongoDB', 'Architecture'],
           status: 'published',
-          isFeatured: true,
-          views: 980,
-          likesCount: 64,
+          isFeatured: false,
+          views: 940,
+          likesCount: 54,
           commentsCount: 2,
-          readTime: 5,
+          readTime: 6,
         },
         {
-          title: 'Mastering Deep Work and Daily Flow in Software Engineering',
-          slug: 'mastering-deep-work-and-daily-flow-in-software-engineering',
-          excerpt: 'Practical strategies to eliminate context switching, structure uninterrupted coding blocks, and double cognitive output.',
+          title: 'The Deep Work Habit: Cultivating Uninterrupted Focus',
+          slug: 'the-deep-work-habit-cultivating-uninterrupted-focus',
+          excerpt: 'Mastering cognitive focus in a hyper-connected world. Practical strategies for knowledge workers and software engineers.',
           content: `
-# Mastering Deep Work and Daily Flow
+# The Deep Work Habit
 
-Distraction is the single greatest drain on creative momentum. For software engineers and technical writers, sustained focus is a superpower.
+Deep work is the ability to focus without distraction on a cognitively demanding task. It is a skill that allows you to quickly master complicated information and produce better results in less time.
 
-## The 90-Minute Focus Protocol
-
-1. **Morning Silence**: Spend the first 2 hours of your day without Slack or Email open.
-2. **Single-Task Isolation**: Focus on one architectural problem until resolution.
-3. **Intentional Rest**: Take short walks to synthesize ideas naturally.
-
-> "Deep work is the ability to focus without distraction on a cognitively demanding task." – Cal Newport
+## Key Rituals for Deep Work:
+- **Time-blocking**: Schedule specific blocks for deep work vs shallow tasks.
+- **Digital Sunset**: Turn off notifications after hours to allow cognitive recovery.
+- **Environment Design**: Dedicated reading and writing space free from social media alerts.
           `,
           coverImage: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1000&auto=format&fit=crop&q=80',
           author: adminUser._id,
           category: prodCat._id,
-          tags: ['Productivity', 'DeepWork', 'Mindset', 'Growth'],
+          tags: ['Productivity', 'Focus', 'Writing'],
           status: 'published',
           isFeatured: false,
-          views: 650,
+          views: 610,
           likesCount: 42,
           commentsCount: 1,
-          readTime: 3,
+          readTime: 5,
         },
       ]);
 
@@ -220,59 +257,16 @@ Distraction is the single greatest drain on creative momentum. For software engi
   }
 };
 
-const startServer = async () => {
-  await connectDB();
-  await autoSeed();
+// Initialize DB asynchronously for local development or when MONGODB_URI is provided
+if (!process.env.VERCEL) {
+  connectDB().then(() => autoSeed()).catch((err) => console.error('[DB Init Error]', err));
+} else if (process.env.MONGODB_URI) {
+  connectDB().catch((err) => console.error('[DB Init Error]', err));
+}
 
-  const app = express();
+const PORT = process.env.PORT || 5000;
 
-  app.use(cors({ origin: true, credentials: true }));
-  app.use(express.json({ limit: '10mb' }));
-  app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-  // Static uploads directory
-  app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-  // Health endpoint
-  app.get('/api/health', (req, res) => {
-    res.status(200).json({
-      status: 'online',
-      message: 'InkVerse Publishing Platform Unified Server is running',
-      timestamp: new Date().toISOString(),
-    });
-  });
-
-  // REST API Routes
-  app.use('/api/auth', require('./routes/authRoutes'));
-  app.use('/api/blogs', require('./routes/blogRoutes'));
-  app.use('/api', require('./routes/commentRoutes'));
-  app.use('/api/users', require('./routes/userRoutes'));
-  app.use('/api/categories', require('./routes/categoryRoutes'));
-  app.use('/api/analytics', require('./routes/analyticsRoutes'));
-  app.use('/api/admin', require('./routes/adminRoutes'));
-
-  // Serve static frontend build if present
-  const frontendDistPath = path.join(__dirname, '../frontend/dist');
-  if (fs.existsSync(frontendDistPath)) {
-    app.use(express.static(frontendDistPath));
-  }
-
-  // SPA Fallback for client routes
-  app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
-      return res.status(404).json({ success: false, message: 'API Route Not Found' });
-    }
-    const indexPath = path.join(frontendDistPath, 'index.html');
-    if (fs.existsSync(indexPath)) {
-      return res.sendFile(indexPath);
-    }
-    res.status(404).send('Frontend build not found. Please run `npm run build` in the frontend directory.');
-  });
-
-  app.use(errorHandler);
-
-  const PORT = process.env.PORT || 5000;
-
+if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
   app.listen(PORT, () => {
     console.log(`====================================================`);
     console.log(`  INKVERSE UNIFIED SINGLE SERVER ONLINE`);
@@ -281,6 +275,6 @@ const startServer = async () => {
     console.log(`  Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log(`====================================================`);
   });
-};
+}
 
-startServer();
+module.exports = app;

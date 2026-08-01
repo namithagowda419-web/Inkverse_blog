@@ -35,7 +35,7 @@ const userSchema = new mongoose.Schema(
     },
     bio: {
       type: String,
-      default: 'Passionate writer & reader on Maroon Blog.',
+      default: 'Passionate writer & reader on InkVerse.',
       maxlength: 300,
     },
     role: {
@@ -68,4 +68,4 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = mongoose.models.User || mongoose.model('User', userSchema);
