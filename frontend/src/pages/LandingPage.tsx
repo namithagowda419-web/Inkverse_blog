@@ -6,7 +6,7 @@ import { SkeletonCard } from '../components/SkeletonCard';
 import { Card3DTilt } from '../components/Card3DTilt';
 import { InkVerseLogo } from '../components/InkVerseLogo';
 import api from '../services/api';
-import { ArrowRight, Feather, BookOpen, Sparkles, TrendingUp, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Feather, BookOpen, Sparkles, TrendingUp, ShieldCheck, Quote } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export const LandingPage: React.FC = () => {
@@ -55,13 +55,15 @@ export const LandingPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-7 text-center lg:text-left space-y-6">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-100 dark:bg-purple-950/80 text-brand-700 dark:text-brand-300 border border-purple-200 dark:border-purple-800 text-xs font-bold uppercase tracking-widest shadow-sm"
+              transition={{ duration: 0.7, ease: 'easeOut' }}
+              className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-purple-100/90 dark:bg-purple-950/70 text-brand-700 dark:text-purple-300 border border-purple-200/80 dark:border-purple-800/60 shadow-sm backdrop-blur-sm"
             >
-              <Feather className="w-4 h-4 text-brand-600" />
-              <span>Next-Generation Publishing Platform</span>
+              <Quote className="w-3.5 h-3.5 text-brand-600 dark:text-purple-400 shrink-0" />
+              <span className="text-xs sm:text-sm font-medium italic tracking-wide font-serif">
+                “Every great idea begins as a single word.”
+              </span>
             </motion.div>
 
             <motion.h1
