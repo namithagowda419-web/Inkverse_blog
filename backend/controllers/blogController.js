@@ -1,4 +1,9 @@
 const mongoose = require('mongoose');
+const Blog = require('../models/Blog');
+const Category = require('../models/Category');
+const Like = require('../models/Like');
+const Bookmark = require('../models/Bookmark');
+const slugify = require('slugify');
 
 const DEMO_BLOGS = [
   {
