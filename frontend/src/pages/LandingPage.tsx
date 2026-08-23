@@ -6,8 +6,20 @@ import { SkeletonCard } from '../components/SkeletonCard';
 import { Card3DTilt } from '../components/Card3DTilt';
 import { InkVerseLogo } from '../components/InkVerseLogo';
 import api from '../services/api';
-import { ArrowRight, Feather, BookOpen, Sparkles, TrendingUp, ShieldCheck, Quote } from 'lucide-react';
+import { ArrowRight, Feather, BookOpen, Sparkles, TrendingUp, ShieldCheck, Quote, Clock, Eye } from 'lucide-react';
 import { motion } from 'framer-motion';
+
+// Fallback content shown while blogs are loading or if none exist
+const FALLBACK_CARD = {
+  title: 'Building Ideas That Actually Matter',
+  excerpt:
+    'In a world drowning in information, the most powerful thing a writer can do is slow down, think deeply, and say one true thing clearly.',
+  authorName: 'InkVerse Editorial',
+  authorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+  readTime: 5,
+  slug: null as string | null,
+  quote: '"Write to think clearly, not just to publish loudly."',
+};
 
 export const LandingPage: React.FC = () => {
   const [featuredBlogs, setFeaturedBlogs] = useState<Blog[]>([]);
@@ -110,37 +122,97 @@ export const LandingPage: React.FC = () => {
             </motion.div>
           </div>
 
-          {/* Floating 3D Graphic Visual */}
+          {/* Floating 3D Hero Card — connected to live featured blog */}
           <div className="lg:col-span-5 flex justify-center">
             <Card3DTilt className="w-full max-w-md">
-              <motion.div
-                animate={{ y: [0, -10, 0] }}
-                transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-                className="relative bg-surface-cardLight dark:bg-surface-cardDark p-8 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-2xl space-y-6"
-              >
-                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
-                  <div className="flex items-center gap-3">
-                    <InkVerseLogo size="sm" />
-                    <div>
-                      <span className="block text-sm font-bold text-slate-900 dark:text-white">InkVerse Craft</span>
-                      <span className="text-[10px] text-slate-400 font-serif">Published 2 mins ago</span>
+              {(() => {
+                const hero = featuredBlogs[0];
+                const card = hero
+                  ? {
+                      title: hero.title,
+                      excerpt: hero.excerpt || hero.content?.replace(/<[^>]*>?/gm, '').substring(0, 140) + '…',
+                      authorName: hero.author?.name || 'InkVerse Editorial',
+                      authorAvatar: hero.author?.avatar || FALLBACK_CARD.authorAvatar,
+                      readTime: hero.readTime || 5,
+                      slug: hero.slug,
+                      quote: hero.excerpt
+                        ? `"${hero.excerpt.substring(0, 100).trimEnd()}…"`
+                        : FALLBACK_CARD.quote,
+                      publishedAt: hero.createdAt
+                        ? new Date(hero.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric' })
+                        : 'Recently',
+                    }
+                  : { ...FALLBACK_CARD, publishedAt: 'Recently' };
+
+                const inner = (
+                  <motion.div
+                    animate={{ y: [0, -10, 0] }}
+                    transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+                    className="relative bg-surface-cardLight dark:bg-surface-cardDark p-7 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-2xl space-y-5"
+                  >
+                    {/* Card Header */}
+                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+                      <div className="flex items-center gap-3">
+                        <InkVerseLogo size="sm" />
+                        <div>
+                          <span className="block text-sm font-bold text-slate-900 dark:text-white">InkVerse Craft</span>
+                          <span className="text-[10px] text-slate-400 font-serif">Published {card.publishedAt}</span>
+                        </div>
+                      </div>
+                      <span className="px-3 py-1 rounded-full bg-purple-50 dark:bg-purple-950 text-brand-700 dark:text-brand-300 text-xs font-bold border border-purple-200 dark:border-purple-800">
+                        Featured
+                      </span>
                     </div>
-                  </div>
-                  <span className="px-3 py-1 rounded-full bg-purple-50 dark:bg-purple-950 text-brand-700 dark:text-brand-300 text-xs font-bold">
-                    Featured
-                  </span>
-                </div>
 
-                <div className="space-y-3">
-                  <div className="h-4 bg-brand-700/20 rounded-full w-3/4" />
-                  <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded-full w-full" />
-                  <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded-full w-5/6" />
-                </div>
+                    {/* Article Title */}
+                    <h3 className="text-base font-extrabold font-sans text-slate-900 dark:text-white leading-snug tracking-tight line-clamp-2">
+                      {card.title}
+                    </h3>
 
-                <div className="p-4 rounded-2xl bg-purple-50/50 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900/40 text-xs text-brand-900 dark:text-brand-200 font-serif italic">
-                  "Thoughtful publishing with zero distraction."
-                </div>
-              </motion.div>
+                    {/* Excerpt */}
+                    <p className="text-xs font-serif text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-3">
+                      {card.excerpt}
+                    </p>
+
+                    {/* Author + Meta Row */}
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={card.authorAvatar}
+                        alt={card.authorName}
+                        className="w-7 h-7 rounded-full object-cover ring-2 ring-brand-600/30 shrink-0"
+                      />
+                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 truncate flex-1">
+                        {card.authorName}
+                      </span>
+                      <span className="flex items-center gap-1 text-[10px] text-slate-400 shrink-0">
+                        <Clock className="w-3 h-3" />
+                        {card.readTime} min read
+                      </span>
+                    </div>
+
+                    {/* Highlighted Quote */}
+                    <div className="flex gap-2.5 p-4 rounded-2xl bg-purple-50/60 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900/40">
+                      <Quote className="w-4 h-4 text-brand-600 dark:text-brand-400 shrink-0 mt-0.5" />
+                      <p className="text-xs text-brand-900 dark:text-brand-200 font-serif italic leading-relaxed line-clamp-2">
+                        {card.quote}
+                      </p>
+                    </div>
+
+                    {/* Read button */}
+                    <div className="flex justify-end">
+                      <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-brand-700 dark:text-brand-300 hover:text-brand-900 transition">
+                        Read Article <ArrowRight className="w-3 h-3" />
+                      </span>
+                    </div>
+                  </motion.div>
+                );
+
+                return card.slug ? (
+                  <Link to={`/blog/${card.slug}`} className="block">{inner}</Link>
+                ) : (
+                  <div>{inner}</div>
+                );
+              })()}
             </Card3DTilt>
           </div>
         </div>
